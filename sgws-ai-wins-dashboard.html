@@ -1,0 +1,1241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SGWS AI Win Stories</title>
+  <!--
+    DEPLOYMENT INSTRUCTIONS
+    ────────────────────────
+    1. Upload this file to a SharePoint document library (e.g. Site Assets or Documents).
+    2. Open the file's direct URL in your browser to confirm it loads data.
+    3. On your SharePoint page, add an "Embed" web part and paste that URL.
+
+    FIELD NAME NOTE
+    ────────────────
+    SharePoint encodes column display names as internal names (spaces → _x0020_).
+    The field() helper below tries both forms automatically. If a field shows blank,
+    open browser DevTools → Console and run:
+      Object.keys(window.__sgwsItems[0])
+    to see the actual internal names, then update the fieldMap constant below.
+  -->
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      /* ── SGWS Brand Palette ── */
+      --wine-950: #1E0510;
+      --wine-900: #2E0817;
+      --wine-800: #4A1428;
+      --wine-700: #6B1C3A;
+      --wine-600: #8C244E;
+      --wine-200: #E8AABF;
+      --wine-100: #F8E8EE;
+
+      --gold-700: #8A6520;
+      --gold-600: #A67C28;
+      --gold-500: #C4963A;  /* primary accent */
+      --gold-400: #D4AA58;
+      --gold-300: #E4C070;
+      --gold-100: #FBF0CC;
+
+      --cream-50:  #FDFAF4;
+      --cream-100: #FAF5EC;
+      --cream-200: #F2EBD9;
+      --cream-300: #E4D9C0;
+
+      /* ── Semantic tokens ── */
+      --surface-page:   var(--cream-100);
+      --surface-card:   #FFFFFF;
+      --text-primary:   #1A0A10;
+      --text-secondary: #6B4055;
+      --text-muted:     #9A7080;
+      --text-on-dark:   #FFFFFF;
+
+      /* ── Chart colors (single-series bars → one hue, magnitude only) ── */
+      --bar-fill: #9B6B1A;   /* darkened gold — passes 3:1 on white (#9B6B1A: ~3.2:1) */
+      --bar-track: var(--cream-200);
+
+      /* ── Win level categorical (2 identities, adjacent pair) ── */
+      --level-automation:  #9B6B1A;  /* dark gold — validated */
+      --level-repeatable:  #B03468;  /* wine-mid — validated  */
+      --level-other:       #1B7A5A;  /* teal                  */
+
+      /* ── Layout ── */
+      --max-w:      1240px;
+      --r-sm:       6px;
+      --r-md:       12px;
+      --r-lg:       20px;
+      --r-full:     999px;
+      --shadow-card:  0 1px 3px rgba(26,10,16,.07), 0 2px 8px rgba(26,10,16,.06);
+      --shadow-hover: 0 4px 16px rgba(26,10,16,.13), 0 8px 24px rgba(26,10,16,.07);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: var(--surface-page);
+      color: var(--text-primary);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ═══════════════════════════════════════════
+       HEADER
+    ═══════════════════════════════════════════ */
+    .site-header {
+      background: linear-gradient(105deg, var(--wine-950) 0%, var(--wine-800) 55%, var(--wine-700) 100%);
+      border-bottom: 2px solid var(--gold-500);
+      height: 60px;
+      display: flex;
+      align-items: center;
+      padding: 0 2rem;
+      gap: 1rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-badge {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--gold-500);
+      color: var(--wine-900);
+      font-weight: 800;
+      font-size: 13px;
+      letter-spacing: -.5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .header-wordmark { display: flex; flex-direction: column; gap: 1px; }
+
+    .header-name {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: .01em;
+    }
+
+    .header-sub {
+      font-size: .7rem;
+      color: var(--gold-300);
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+
+    /* ═══════════════════════════════════════════
+       HERO
+    ═══════════════════════════════════════════ */
+    .hero {
+      background: linear-gradient(150deg, var(--wine-900) 0%, var(--wine-700) 55%, #A03060 100%);
+      padding: 3.5rem 2rem 3rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 500px 300px at 85% 40%, rgba(196,150,58,.18) 0%, transparent 70%),
+        radial-gradient(ellipse 300px 400px at 10% 90%, rgba(196,150,58,.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero-inner {
+      max-width: var(--max-w);
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 2rem;
+      align-items: center;
+    }
+
+    @media (max-width: 680px) {
+      .hero-inner { grid-template-columns: 1fr; }
+      .hero-counter-block { display: none; }
+    }
+
+    .hero-eyebrow {
+      font-size: .72rem;
+      font-weight: 700;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--gold-300);
+      margin-bottom: .75rem;
+    }
+
+    .hero-headline {
+      font-size: clamp(1.75rem, 4vw, 2.9rem);
+      font-weight: 800;
+      color: #fff;
+      line-height: 1.1;
+      margin-bottom: .875rem;
+    }
+
+    .hero-headline em {
+      font-style: normal;
+      color: var(--gold-400);
+    }
+
+    .hero-sub {
+      font-size: 1rem;
+      color: rgba(255,255,255,.72);
+      max-width: 520px;
+      margin-bottom: 2rem;
+    }
+
+    .hero-stats {
+      display: flex;
+      gap: 2.5rem;
+      flex-wrap: wrap;
+    }
+
+    .hero-stat { display: flex; flex-direction: column; gap: 3px; }
+
+    .hero-stat-n {
+      font-size: 2.25rem;
+      font-weight: 800;
+      color: var(--gold-300);
+      line-height: 1;
+      letter-spacing: -.02em;
+    }
+
+    .hero-stat-l {
+      font-size: .7rem;
+      color: rgba(255,255,255,.55);
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    /* Big counter block on the right */
+    .hero-counter-block {
+      text-align: center;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(196,150,58,.3);
+      border-radius: var(--r-lg);
+      padding: 1.75rem 2.5rem;
+      backdrop-filter: blur(8px);
+    }
+
+    .hero-big-n {
+      font-size: 4.5rem;
+      font-weight: 800;
+      color: var(--gold-300);
+      line-height: 1;
+      letter-spacing: -.04em;
+    }
+
+    .hero-big-l {
+      font-size: .8rem;
+      color: rgba(255,255,255,.6);
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      margin-top: .4rem;
+    }
+
+    /* ═══════════════════════════════════════════
+       KPI ROW
+    ═══════════════════════════════════════════ */
+    .kpi-section {
+      max-width: var(--max-w);
+      margin: 0 auto;
+      padding: 2rem 2rem 0;
+    }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 1rem;
+    }
+
+    .kpi-tile {
+      background: var(--surface-card);
+      border-radius: var(--r-md);
+      padding: 1.375rem 1.5rem 1.25rem;
+      box-shadow: var(--shadow-card);
+      border-top: 3px solid var(--gold-500);
+      display: flex;
+      flex-direction: column;
+      gap: .2rem;
+    }
+
+    .kpi-label {
+      font-size: .7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: var(--text-muted);
+    }
+
+    .kpi-value {
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: var(--wine-800);
+      line-height: 1.1;
+      letter-spacing: -.02em;
+    }
+
+    .kpi-sub {
+      font-size: .78rem;
+      color: var(--text-secondary);
+    }
+
+    /* ═══════════════════════════════════════════
+       CHARTS
+    ═══════════════════════════════════════════ */
+    .charts-section {
+      max-width: var(--max-w);
+      margin: 0 auto;
+      padding: 1.75rem 2rem 0;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+    }
+
+    @media (max-width: 700px) {
+      .charts-section { grid-template-columns: 1fr; }
+    }
+
+    .chart-card {
+      background: var(--surface-card);
+      border-radius: var(--r-md);
+      padding: 1.5rem 1.5rem 1.25rem;
+      box-shadow: var(--shadow-card);
+    }
+
+    .chart-card.full-width { grid-column: 1 / -1; }
+
+    .chart-title {
+      font-size: .72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: var(--text-muted);
+      margin-bottom: 1.25rem;
+    }
+
+    /* ── Horizontal bar chart ── */
+    .bar-chart { display: flex; flex-direction: column; gap: 9px; }
+
+    .bar-row {
+      display: grid;
+      grid-template-columns: 150px 1fr 32px;
+      align-items: center;
+      gap: 10px;
+      position: relative;
+    }
+
+    .bar-row:hover .bar-tooltip { display: block; }
+
+    .bar-label {
+      font-size: .78rem;
+      color: var(--text-primary);
+      text-align: right;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .bar-track {
+      height: 18px;
+      background: var(--bar-track);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      border-radius: 4px 0 0 4px;
+      background: var(--bar-fill);
+      width: 0;
+      transition: width .85s cubic-bezier(.4,0,.2,1);
+    }
+
+    /* right-cap rounded when fill reaches 100% */
+    .bar-fill[data-pct="100"] { border-radius: 4px; }
+
+    .bar-count {
+      font-size: .78rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .bar-tooltip {
+      display: none;
+      position: absolute;
+      left: 160px;
+      top: -30px;
+      background: var(--wine-900);
+      color: #fff;
+      font-size: .72rem;
+      padding: 4px 10px;
+      border-radius: var(--r-sm);
+      white-space: nowrap;
+      pointer-events: none;
+      z-index: 20;
+    }
+
+    /* ── Win level pills ── */
+    .level-pills { display: flex; gap: .875rem; flex-wrap: wrap; }
+
+    .level-pill {
+      flex: 1;
+      min-width: 160px;
+      display: flex;
+      align-items: center;
+      gap: .625rem;
+      background: var(--surface-card);
+      border: 1.5px solid var(--cream-300);
+      border-radius: var(--r-lg);
+      padding: .875rem 1.25rem;
+    }
+
+    .level-dot {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .level-name {
+      font-size: .82rem;
+      color: var(--text-secondary);
+      flex: 1;
+      min-width: 0;
+    }
+
+    .level-n {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: var(--wine-800);
+      letter-spacing: -.02em;
+    }
+
+    /* ═══════════════════════════════════════════
+       STORIES
+    ═══════════════════════════════════════════ */
+    .stories-section {
+      max-width: var(--max-w);
+      margin: 0 auto;
+      padding: 2rem 2rem 3rem;
+    }
+
+    .stories-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.125rem;
+    }
+
+    .stories-title {
+      font-size: 1.2rem;
+      font-weight: 800;
+      color: var(--wine-800);
+    }
+
+    .stories-count {
+      font-size: .82rem;
+      color: var(--text-muted);
+    }
+
+    /* ── Filter row ── */
+    .filter-row {
+      display: flex;
+      align-items: center;
+      gap: .625rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.5rem;
+      padding: .875rem 1rem;
+      background: var(--surface-card);
+      border-radius: var(--r-md);
+      box-shadow: var(--shadow-card);
+    }
+
+    .filter-lbl {
+      font-size: .7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: var(--text-muted);
+      margin-right: .125rem;
+    }
+
+    .filter-sep {
+      width: 1px;
+      height: 20px;
+      background: var(--cream-300);
+      margin: 0 .125rem;
+    }
+
+    select.f-select {
+      font-size: .8rem;
+      font-family: inherit;
+      padding: 5px 10px;
+      border-radius: var(--r-sm);
+      border: 1.5px solid var(--cream-300);
+      background: var(--cream-50);
+      color: var(--text-primary);
+      cursor: pointer;
+    }
+
+    select.f-select:focus { outline: 2px solid var(--gold-500); outline-offset: 1px; }
+
+    button.f-pill {
+      font-size: .78rem;
+      font-family: inherit;
+      padding: 5px 14px;
+      border-radius: var(--r-full);
+      border: 1.5px solid var(--cream-300);
+      background: var(--cream-50);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all .15s;
+    }
+
+    button.f-pill:hover, button.f-pill.active {
+      background: var(--wine-800);
+      border-color: var(--wine-800);
+      color: #fff;
+    }
+
+    input.f-search {
+      font-size: .82rem;
+      font-family: inherit;
+      padding: 5px 11px;
+      border-radius: var(--r-sm);
+      border: 1.5px solid var(--cream-300);
+      background: var(--cream-50);
+      color: var(--text-primary);
+      width: 200px;
+      margin-left: auto;
+    }
+
+    input.f-search:focus { outline: 2px solid var(--gold-500); outline-offset: 1px; }
+
+    /* ── Card grid ── */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1.125rem;
+    }
+
+    /* ── Story card ── */
+    .story-card {
+      background: var(--surface-card);
+      border-radius: var(--r-md);
+      padding: 1.375rem 1.5rem;
+      box-shadow: var(--shadow-card);
+      border-left: 4px solid var(--cream-300);
+      display: flex;
+      flex-direction: column;
+      gap: .75rem;
+      transition: box-shadow .2s, transform .2s, border-left-color .2s;
+    }
+
+    .story-card:hover {
+      box-shadow: var(--shadow-hover);
+      transform: translateY(-2px);
+      border-left-color: var(--gold-500);
+    }
+
+    .card-tags { display: flex; gap: .4rem; flex-wrap: wrap; }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      font-size: .65rem;
+      font-weight: 700;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+      padding: 3px 9px;
+      border-radius: var(--r-full);
+    }
+
+    .tag-area       { background: rgba(176,52,104,.1); color: #B03468; }
+    .tag-automation { background: var(--gold-100);    color: var(--gold-700); }
+    .tag-repeatable { background: rgba(176,52,104,.1); color: #B03468; }
+    .tag-tool       { background: rgba(27,122,90,.1);  color: #0D5A3C; }
+
+    .card-title {
+      font-size: .97rem;
+      font-weight: 700;
+      color: var(--wine-800);
+      line-height: 1.3;
+    }
+
+    .card-summary {
+      font-size: .84rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      display: -webkit-box;
+      -webkit-line-clamp: 4;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    /* Time savings */
+    .time-row {
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+      padding: .5rem .75rem;
+      background: var(--cream-100);
+      border-radius: var(--r-sm);
+      font-size: .78rem;
+      flex-wrap: wrap;
+    }
+
+    .time-label {
+      font-size: .65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--text-muted);
+      margin-right: .1rem;
+    }
+
+    .time-before { color: var(--text-muted); text-decoration: line-through; }
+    .time-arrow  { color: var(--gold-600); font-weight: 800; }
+    .time-after  { color: var(--wine-700); font-weight: 700; }
+
+    /* Card footer */
+    .card-foot {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: .5rem;
+      border-top: 1px solid var(--cream-200);
+      margin-top: auto;
+    }
+
+    .card-scale { font-size: .73rem; color: var(--text-muted); }
+    .card-date  { font-size: .73rem; color: var(--text-muted); }
+
+    /* ═══════════════════════════════════════════
+       STATES
+    ═══════════════════════════════════════════ */
+    .state-loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 4rem 2rem;
+      gap: 1rem;
+      color: var(--text-muted);
+      font-size: .9rem;
+    }
+
+    .spinner {
+      width: 34px;
+      height: 34px;
+      border: 3px solid var(--cream-300);
+      border-top-color: var(--gold-500);
+      border-radius: 50%;
+      animation: spin .75s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .state-empty {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 3.5rem 2rem;
+      color: var(--text-secondary);
+    }
+
+    .state-empty h3 { font-size: 1.05rem; margin-bottom: .4rem; color: var(--wine-800); }
+
+    .state-error {
+      margin: 1.5rem 2rem;
+      padding: 1.25rem 1.5rem;
+      background: #FFF5F5;
+      border: 1.5px solid #FCC;
+      border-radius: var(--r-md);
+      font-size: .82rem;
+      color: #7A0000;
+      line-height: 1.6;
+    }
+
+    .state-error code {
+      display: block;
+      margin-top: .5rem;
+      font-size: .75rem;
+      opacity: .8;
+      font-family: monospace;
+    }
+
+    /* ═══════════════════════════════════════════
+       FOOTER
+    ═══════════════════════════════════════════ */
+    .site-footer {
+      max-width: var(--max-w);
+      margin: 0 auto;
+      padding: 1.25rem 2rem 2rem;
+      border-top: 1px solid var(--cream-300);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: .5rem;
+      font-size: .72rem;
+      color: var(--text-muted);
+    }
+
+    /* ═══════════════════════════════════════════
+       ANIMATIONS
+    ═══════════════════════════════════════════ */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .anim { animation: fadeUp .45s ease both; }
+  </style>
+</head>
+<body>
+
+<!-- ─── HEADER ─────────────────────────────────────────── -->
+<header class="site-header">
+  <div class="header-badge">SG</div>
+  <div class="header-wordmark">
+    <div class="header-name">AI Win Stories</div>
+    <div class="header-sub">Southern Glazer's Wine &amp; Spirits</div>
+  </div>
+</header>
+
+<!-- ─── HERO ───────────────────────────────────────────── -->
+<section class="hero">
+  <div class="hero-inner">
+    <div class="hero-copy">
+      <p class="hero-eyebrow anim" style="animation-delay:.05s">AI Adoption at SGWS</p>
+      <h1 class="hero-headline anim" style="animation-delay:.12s">
+        Our people are driving<br><em>real results</em> with AI.
+      </h1>
+      <p class="hero-sub anim" style="animation-delay:.2s">
+        From automating hours of manual work to building tools that answer questions instantly —
+        see how your colleagues across SGWS are leading the way.
+      </p>
+      <div class="hero-stats anim" style="animation-delay:.28s" id="heroStats">
+        <!-- JS -->
+      </div>
+    </div>
+    <div class="hero-counter-block anim" style="animation-delay:.35s">
+      <div class="hero-big-n" id="heroBigN">—</div>
+      <div class="hero-big-l">Wins Logged</div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── KPI TILES ──────────────────────────────────────── -->
+<section class="kpi-section">
+  <div class="kpi-grid" id="kpiGrid">
+    <div class="state-loading" style="grid-column:1/-1">
+      <div class="spinner"></div>
+      <span>Loading AI wins…</span>
+    </div>
+  </div>
+</section>
+
+<!-- ─── CHARTS ─────────────────────────────────────────── -->
+<section class="charts-section" id="chartsSection"></section>
+
+<!-- ─── STORIES ────────────────────────────────────────── -->
+<section class="stories-section">
+  <div class="stories-header">
+    <h2 class="stories-title">Win Stories</h2>
+    <span class="stories-count" id="storiesCount"></span>
+  </div>
+  <div class="filter-row" id="filterRow"></div>
+  <div class="cards-grid" id="cardsGrid"></div>
+</section>
+
+<!-- ─── FOOTER ─────────────────────────────────────────── -->
+<footer class="site-footer">
+  <span id="footerLeft">SGWS AI Win Stories</span>
+  <span>Submit your win via the SGWS AI Wins SharePoint list</span>
+</footer>
+
+<script>
+  // ─────────────────────────────────────────────────────────
+  // CONFIG — update LIST_NAME if your SharePoint list has a
+  // different name, and SITE_URL if hosting cross-site.
+  // ─────────────────────────────────────────────────────────
+  // ── Option A: Power Automate flow URL (recommended — paste your flow's HTTP trigger URL here)
+  const FLOW_URL  = 'https://d094ed62567fed0d83ebae2abd539a.13.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/21/workflows/27d198d2633e46e0b9b8579236a42656/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=aiXL1DEnnmB1QxHpg6tHs7yEsdZNSrkZJG6HXq441Lc';
+
+  // ── Option B: Direct SharePoint REST (only works when file is hosted on same SP site)
+  const LIST_NAME = 'AI Use Case Wins';
+  const SITE_URL  = 'https://southernglazers.sharepoint.com/sites/WTKH/MSCP';
+
+  // ─────────────────────────────────────────────────────────
+  // FIELD MAP — internal SharePoint column names confirmed
+  // from the Copilot Studio agent's InvokeConnectorAction.
+  // ─────────────────────────────────────────────────────────
+  const FIELD_MAP = {
+    'Title':                          'Title',
+    'AI Win Summary':                 'AIWinSummary',
+    'Business Area':                  'BusinessArea',
+    'Business Benefits':              'BusinessBenefits',
+    'Business Challenge':             'BusinessChallenge',
+    'Win Level':                      'WinLevel',
+    'Primary AI Tool':                'PrimaryAITool',
+    'Time Before Description':        'TimeBeforeDescription',
+    'Time After Description':         'TimeAfterDescription',
+    'Contains Sensitive Information': 'ContainsSensitiveInformation',
+    'Needs Human Review':             'NeedsHumanReview',
+    'Scale':                          'Scale',
+    'Repeatable':                     'Repeatable',
+    'Automated':                      'Automated',
+    'Process Frequency':              'ProcessFrequency',
+    'Submitted Date':                 'SubmittedDate',
+    'Permission to Share':            'PermissiontoShare',
+    'M365 Applications':              'M365Applications',
+    'Microsoft Agent Details':        'MicrosoftAgentUsed',
+    'Custom Agent Details':           'CustomAgentName',
+    'Cowork Details':                 'CoworkDetails',
+  };
+
+  function fld(item, displayName) {
+    const internal = FIELD_MAP[displayName];
+    if (internal && item[internal] != null) return item[internal];
+    // Fallback: try exact name, then space-stripped
+    if (item[displayName] != null) return item[displayName];
+    const nsp = displayName.replace(/ /g, '');
+    if (item[nsp] != null) return item[nsp];
+    return null;
+  }
+  function fStr(item, name) { return (fld(item, name) ?? '').toString().trim(); }
+
+  // ─────────────────────────────────────────────────────────
+  // VISIBILITY FILTER
+  // Show only wins that are not sensitive and don't need review
+  // ─────────────────────────────────────────────────────────
+  function isVisible(item) {
+    const sensitive = fStr(item, 'Contains Sensitive Information').toLowerCase();
+    const review    = fStr(item, 'Needs Human Review').toLowerCase();
+    return sensitive !== 'yes' && review !== 'yes';
+  }
+
+  // ─────────────────────────────────────────────────────────
+  // FETCH
+  // ─────────────────────────────────────────────────────────
+  async function fetchItems() {
+    let all = [];
+
+    if (FLOW_URL) {
+      // ── Power Automate flow (recommended) ──
+      const res = await fetch(FLOW_URL, { method: 'GET' });
+      if (!res.ok) {
+        const detail = await res.text().catch(() => '');
+        throw new Error(`Flow responded ${res.status} ${res.statusText}. ${detail.slice(0, 200)}`);
+      }
+      const json = await res.json();
+      // Flow may return an array directly or wrap it in a value property
+      all = Array.isArray(json) ? json : (json.value ?? []);
+
+    } else {
+      // ── Direct SharePoint REST (fallback — requires same-site hosting) ──
+      let base = SITE_URL;
+      if (!base) {
+        const spCtx = window._spPageContextInfo;
+        if (spCtx?.webAbsoluteUrl) {
+          base = spCtx.webAbsoluteUrl.replace(/\/$/, '');
+        } else if (window.location.origin && window.location.origin !== 'null') {
+          base = window.location.origin;
+        } else {
+          throw new Error('Set FLOW_URL at the top of this file, or open it from its SharePoint URL.');
+        }
+      }
+      const safeName = LIST_NAME.replace(/'/g, "''");
+      const url = `${base}/_api/web/lists/getbytitle('${safeName}')/items?$top=5000&$orderby=Created%20desc`;
+      const res = await fetch(url, {
+        headers: { 'Accept': 'application/json;odata=verbose' },
+        credentials: 'same-origin'
+      });
+      if (!res.ok) {
+        const detail = await res.text().catch(() => '');
+        throw new Error(`SharePoint API ${res.status} ${res.statusText}. ${detail.slice(0, 200)}`);
+      }
+      const json = await res.json();
+      all = json.d?.results ?? json.value ?? [];
+    }
+
+    window.__sgwsItems = all;   // expose for field-name debugging
+    return all.filter(isVisible);
+  }
+
+  // ─────────────────────────────────────────────────────────
+  // HELPERS
+  // ─────────────────────────────────────────────────────────
+  function countBy(items, key) {
+    const m = {};
+    items.forEach(i => {
+      const v = fStr(i, key) || 'Unknown';
+      m[v] = (m[v] || 0) + 1;
+    });
+    return Object.entries(m).sort((a, b) => b[1] - a[1]);
+  }
+
+  function uniq(items, key) {
+    return [...new Set(items.map(i => fStr(i, key)).filter(Boolean))].sort();
+  }
+
+  function fmtDate(val) {
+    if (!val) return '';
+    try {
+      return new Date(val).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+    } catch { return ''; }
+  }
+
+  function animCount(el, target, ms = 1100) {
+    const t0 = performance.now();
+    const tick = now => {
+      const p = Math.min((now - t0) / ms, 1);
+      const e = 1 - Math.pow(1 - p, 3);
+      el.textContent = Math.round(e * target).toLocaleString();
+      if (p < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }
+
+  function esc(str) {
+    return String(str)
+      .replace(/&/g,'&amp;')
+      .replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;');
+  }
+
+  // ─────────────────────────────────────────────────────────
+  // HERO
+  // ─────────────────────────────────────────────────────────
+  function renderHero(items) {
+    const areas = new Set(items.map(i => fStr(i,'Business Area')).filter(Boolean)).size;
+    const tools = new Set(items.map(i => fStr(i,'Primary AI Tool')).filter(Boolean)).size;
+
+    // Big number
+    const bigN = document.getElementById('heroBigN');
+    bigN.textContent = '0';
+    setTimeout(() => animCount(bigN, items.length, 1400), 300);
+
+    // Stat row
+    document.getElementById('heroStats').innerHTML = [
+      [areas, 'Business Areas'],
+      [tools, 'AI Tools in Use'],
+      [items.filter(i => fStr(i,'Repeatable').toLowerCase() === 'yes').length, 'Repeatable Practices'],
+    ].map(([n, l]) => `
+      <div class="hero-stat">
+        <span class="hero-stat-n" data-n="${n}">0</span>
+        <span class="hero-stat-l">${l}</span>
+      </div>
+    `).join('');
+
+    setTimeout(() => {
+      document.querySelectorAll('.hero-stat-n').forEach(el => {
+        animCount(el, +el.dataset.n, 1200);
+      });
+    }, 400);
+  }
+
+  // ─────────────────────────────────────────────────────────
+  // KPI TILES
+  // ─────────────────────────────────────────────────────────
+  function renderKPIs(items) {
+    const areas = new Set(items.map(i => fStr(i,'Business Area')).filter(Boolean)).size;
+    const tools = new Set(items.map(i => fStr(i,'Primary AI Tool')).filter(Boolean)).size;
+    const rep   = items.filter(i => fStr(i,'Repeatable').toLowerCase() === 'yes').length;
+    const auto  = items.filter(i => fStr(i,'Automated').toLowerCase() === 'yes').length;
+
+    const tiles = [
+      { label: 'Total Wins',           value: items.length, sub: 'use cases logged' },
+      { label: 'Business Areas',        value: areas,        sub: 'teams contributing' },
+      { label: 'AI Tools in Use',       value: tools,        sub: 'distinct tools' },
+      { label: 'Repeatable Practices',  value: rep,          sub: `of ${items.length} wins` },
+    ];
+
+    const grid = document.getElementById('kpiGrid');
+    grid.innerHTML = tiles.map(t => `
+      <div class="kpi-tile anim">
+        <span class="kpi-label">${esc(t.label)}</span>
+        <span class="kpi-value" data-n="${t.value}">0</span>
+        <span class="kpi-sub">${esc(t.sub)}</span>
+      </div>
+    `).join('');
+
+    setTimeout(() => {
+      grid.querySelectorAll('[data-n]').forEach(el => animCount(el, +el.dataset.n, 1000));
+    }, 200);
+  }
+
+  // ─────────────────────────────────────────────────────────
+  // BAR CHART
+  // ─────────────────────────────────────────────────────────
+  function barChart(entries, maxRows = 8) {
+    const rows = entries.slice(0, maxRows);
+    const max  = rows[0]?.[1] || 1;
+    return `
+      <div class="bar-chart" role="list">
+        ${rows.map(([label, count]) => {
+          const pct = (count / max * 100).toFixed(1);
+          return `
+            <div class="bar-row" role="listitem">
+              <span class="bar-label" title="${esc(label)}">${esc(label)}</span>
+              <div class="bar-track">
+                <div class="bar-fill" data-pct="${pct}" style="width:0%"></div>
+              </div>
+              <span class="bar-count">${count}</span>
+              <div class="bar-tooltip">${esc(label)}: ${count} win${count !== 1 ? 's' : ''}</div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+  }
+
+  // ─────────────────────────────────────────────────────────
+  // CHARTS SECTION
+  // ─────────────────────────────────────────────────────────
+  function renderCharts(items) {
+    const toolCounts  = countBy(items, 'Primary AI Tool');
+    const areaCounts  = countBy(items, 'Business Area');
+    const levelCounts = countBy(items, 'Win Level');
+
+    // Win level dot colors
+    const levelColors = {
+      'Automation Win': 'var(--level-automation)',
+      'Repeatable Productivity Practice': 'var(--level-repeatable)',
+    };
+
+    const section = document.getElementById('chartsSection');
+    section.innerHTML = `
+      <div class="chart-card">
+        <div class="chart-title">AI Tool Adoption</div>
+        ${barChart(toolCounts, 8)}
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-title">Wins by Business Area</div>
+        ${barChart(areaCounts, 8)}
+      </div>
+
+      <div class="chart-card full-width">
+        <div class="chart-title">Win Type Breakdown</div>
+        <div class="level-pills">
+          ${levelCounts.map(([lvl, n]) => `
+            <div class="level-pill">
+              <div class="level-dot" style="background:${levelColors[lvl] || 'var(--level-other)'}"></div>
+              <span class="level-name">${esc(lvl)}</span>
+              <span class="level-n" data-n="${n}">0</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+
+    // Animate bars
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        section.querySelectorAll('.bar-fill').forEach(el => {
+          el.style.width = el.dataset.pct + '%';
+        });
+        section.querySelectorAll('.level-n[data-n]').forEach(el => {
+          animCount(el, +el.dataset.n, 900);
+        });
+      }, 80);
+    });
+  }
+
+  // ─────────────────────────────────────────────────────────
+  // FILTERS
+  // ─────────────────────────────────────────────────────────
+  let filters = { area: 'All', level: 'All', tool: 'All', q: '' };
+
+  function renderFilters(allItems) {
+    const areas  = ['All', ...uniq(allItems, 'Business Area')];
+    const tools  = ['All', ...uniq(allItems, 'Primary AI Tool')];
+    const levels = uniq(allItems, 'Win Level');
+
+    document.getElementById('filterRow').innerHTML = `
+      <span class="filter-lbl">Filter</span>
+
+      <select class="f-select" id="fArea" aria-label="Business Area">
+        ${areas.map(a => `<option value="${esc(a)}">${esc(a === 'All' ? 'All Areas' : a)}</option>`).join('')}
+      </select>
+
+      <div class="filter-sep"></div>
+
+      ${levels.map(l => `
+        <button class="f-pill" data-level="${esc(l)}">
+          ${esc(l.replace('Repeatable Productivity Practice', 'Repeatable Practice'))}
+        </button>
+      `).join('')}
+
+      <div class="filter-sep"></div>
+
+      <select class="f-select" id="fTool" aria-label="AI Tool">
+        ${tools.map(t => `<option value="${esc(t)}">${esc(t === 'All' ? 'All Tools' : t)}</option>`).join('')}
+      </select>
+
+      <input class="f-search" id="fSearch" type="search" placeholder="Search wins…" aria-label="Search wins">
+    `;
+
+    document.getElementById('fArea').addEventListener('change', e => {
+      filters.area = e.target.value; applyFilters(allItems);
+    });
+    document.getElementById('fTool').addEventListener('change', e => {
+      filters.tool = e.target.value; applyFilters(allItems);
+    });
+    document.getElementById('fSearch').addEventListener('input', e => {
+      filters.q = e.target.value; applyFilters(allItems);
+    });
+
+    document.querySelectorAll('.f-pill[data-level]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const l = btn.dataset.level;
+        filters.level = filters.level === l ? 'All' : l;
+        document.querySelectorAll('.f-pill[data-level]').forEach(b => {
+          b.classList.toggle('active', b.dataset.level === filters.level);
+        });
+        applyFilters(allItems);
+      });
+    });
+  }
+
+  // ─────────────────────────────────────────────────────────
+  // STORY CARD
+  // ─────────────────────────────────────────────────────────
+  function cardHtml(item, idx) {
+    const title  = fStr(item, 'Title');
+    const sum    = fStr(item, 'AI Win Summary');
+    const area   = fStr(item, 'Business Area');
+    const level  = fStr(item, 'Win Level');
+    const tool   = fStr(item, 'Primary AI Tool');
+    const before = fStr(item, 'Time Before Description');
+    const after  = fStr(item, 'Time After Description');
+    const scale  = fStr(item, 'Scale');
+    const raw    = fStr(item, 'Submitted Date') || fStr(item, 'Created');
+    const date   = fmtDate(raw);
+
+    const lvlClass = level.toLowerCase().includes('automation') ? 'tag-automation' : 'tag-repeatable';
+
+    const timeBlock = (before && after) ? `
+      <div class="time-row">
+        <span class="time-label">Time</span>
+        <span class="time-before">${esc(before)}</span>
+        <span class="time-arrow">→</span>
+        <span class="time-after">${esc(after)}</span>
+      </div>
+    ` : '';
+
+    return `
+      <article class="story-card anim" style="animation-delay:${(idx % 9) * .045}s"
+               aria-label="${esc(title)}">
+        <div class="card-tags">
+          ${area  ? `<span class="tag tag-area">${esc(area)}</span>` : ''}
+          ${level ? `<span class="tag ${lvlClass}">${esc(level)}</span>` : ''}
+          ${tool  ? `<span class="tag tag-tool">${esc(tool)}</span>` : ''}
+        </div>
+        <h3 class="card-title">${esc(title || 'Untitled')}</h3>
+        ${sum ? `<p class="card-summary">${esc(sum)}</p>` : ''}
+        ${timeBlock}
+        <div class="card-foot">
+          <span class="card-scale">${esc(scale)}</span>
+          ${date ? `<span class="card-date">${esc(date)}</span>` : ''}
+        </div>
+      </article>
+    `;
+  }
+
+  // ─────────────────────────────────────────────────────────
+  // RENDER CARDS
+  // ─────────────────────────────────────────────────────────
+  function renderCards(items) {
+    const grid  = document.getElementById('cardsGrid');
+    const count = document.getElementById('storiesCount');
+
+    if (!items.length) {
+      count.textContent = '0 wins';
+      grid.innerHTML = `
+        <div class="state-empty">
+          <h3>No wins match your filters</h3>
+          <p>Try adjusting the filters above.</p>
+        </div>
+      `;
+      return;
+    }
+
+    count.textContent = `${items.length} win${items.length !== 1 ? 's' : ''}`;
+    grid.innerHTML = items.map((item, i) => cardHtml(item, i)).join('');
+  }
+
+  // ─────────────────────────────────────────────────────────
+  // APPLY FILTERS
+  // ─────────────────────────────────────────────────────────
+  function applyFilters(all) {
+    let out = all;
+    if (filters.area  !== 'All') out = out.filter(i => fStr(i,'Business Area')    === filters.area);
+    if (filters.level !== 'All') out = out.filter(i => fStr(i,'Win Level')         === filters.level);
+    if (filters.tool  !== 'All') out = out.filter(i => fStr(i,'Primary AI Tool')   === filters.tool);
+    if (filters.q) {
+      const q = filters.q.toLowerCase();
+      out = out.filter(i =>
+        fStr(i,'Title').toLowerCase().includes(q) ||
+        fStr(i,'AI Win Summary').toLowerCase().includes(q)
+      );
+    }
+    renderCards(out);
+  }
+
+  // ─────────────────────────────────────────────────────────
+  // MAIN
+  // ─────────────────────────────────────────────────────────
+  async function init() {
+    try {
+      const items = await fetchItems();
+
+      renderHero(items);
+      renderKPIs(items);
+      renderCharts(items);
+      renderFilters(items);
+      renderCards(items);
+
+      document.getElementById('footerLeft').textContent =
+        `SGWS AI Win Stories · Refreshed ${new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}`;
+
+    } catch (err) {
+      console.error('[SGWS AI Wins]', err);
+
+      const errHtml = `
+        <div class="state-error">
+          <strong>Could not load win data.</strong>
+          ${err.message}
+          <code>
+            If you're previewing this file locally (file:// URL), the SharePoint API
+            won't be reachable. Upload it to a SharePoint document library first,
+            then open it from that URL.<br><br>
+            To debug field names, open DevTools → Console after the page loads and run:<br>
+            Object.keys(window.__sgwsItems?.[0] ?? {})
+          </code>
+        </div>
+      `;
+
+      document.getElementById('kpiGrid').innerHTML        = errHtml;
+      document.getElementById('chartsSection').innerHTML  = '';
+      document.getElementById('filterRow').innerHTML      = '';
+      document.getElementById('cardsGrid').innerHTML      = '';
+    }
+  }
+
+  init();
+</script>
+</body>
+</html>
