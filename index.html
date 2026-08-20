@@ -705,7 +705,7 @@
     let all = [];
 
     if (FLOW_URL) {
-      const res = await fetch(FLOW_URL, { method: 'GET' });
+      const res = await fetch(FLOW_URL, { method: 'GET', cache: 'no-store' });
       if (!res.ok) {
         const detail = await res.text().catch(() => '');
         throw new Error(`Flow responded ${res.status} ${res.statusText}. ${detail.slice(0, 200)}`);
